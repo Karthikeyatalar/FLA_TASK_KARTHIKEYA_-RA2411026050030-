@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finite-automata validators - live demo</title>
+<style>
+ :root{--bg:#f6f7f9;--card:#fff;--ink:#1b2430;--mute:#667085;--ok:#137a3b;--okbg:#e6f6ec;--bad:#b42318;--badbg:#fdecea;--head:#1f3a5f}
+ @media (prefers-color-scheme:dark){:root{--bg:#10151c;--card:#18202a;--ink:#e6eaf0;--mute:#9aa6b5;--ok:#6fdc97;--okbg:#14301f;--bad:#ff8a80;--badbg:#3a1b19;--head:#0d2a4d}}
+ body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+ header{background:var(--head);color:#fff;padding:14px 20px}
+ header small{display:block;opacity:.8;margin-top:2px}
+ main{max-width:900px;margin:18px auto;padding:0 14px;display:grid;gap:14px}
+ .card{background:var(--card);border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+ select,input{width:100%;box-sizing:border-box;padding:9px;font:inherit;border-radius:6px;border:1px solid var(--mute);background:var(--card);color:var(--ink)}
+ .res{margin-top:10px;padding:10px;border-radius:6px;font-weight:600}
+ .ok{background:var(--okbg);color:var(--ok)} .bad{background:var(--badbg);color:var(--bad)}
+ table{border-collapse:collapse;width:100%} td,th{text-align:left;padding:4px 8px;border-bottom:1px solid rgba(128,128,128,.25);font-family:ui-monospace,monospace;font-size:13px}
+ .wrap{overflow-x:auto;max-height:340px;overflow-y:auto} .chips button{margin:3px;padding:3px 8px;border-radius:12px;border:1px solid var(--mute);background:var(--card);color:var(--ink);cursor:pointer}
+</style></head><body>
+<header><b>Finite-automata validators - live demo</b><small>21CSC301T Formal Language and Automata - CLA-2 Task 2 - K. R. Vaishak (RA2411026050018)</small></header>
+<main>
+ <div class="card"><label>Application<select id="app"></select></label>
+  <label style="display:block;margin-top:10px">Input string<input id="inp" autocomplete="off" spellcheck="false"></label>
+  <div id="res" class="res"></div><div class="chips" id="chips"></div></div>
+ <div class="card"><b>Transition trace</b><div class="wrap"><table id="tr"></table></div></div>
+</main>
+<script>
+const DATA=__DATA__, LABELS=__LABELS__;
+const SAMPLES={pin:["4821","482","48a1"],card:["WWC","WWW","CW"],
+ password:["Srm@2026","srm@2026","Sr@1"],email:["vaishak.kr@srmist.edu.in","vaishak@srm.c0m","x@y.io"]};
+function cls(kind,c){
+ if(kind==="none")return c;
+ const L=/[A-Za-z]/.test(c),D=/[0-9]/.test(c);
+ if(kind==="pin")return D?"D":"O";
+ if(kind==="password"){ if(/[A-Z]/.test(c))return"U"; if(/[a-z]/.test(c))return"L"; if(D)return"D";
+   return /[!-\/:-@\[-`{-~]/.test(c)?"S":"O"; }
+ if(kind==="email"){ if(L)return"L"; if(D)return"D"; return({".":"DOT","-":"HY","_":"US","@":"AT"})[c]||"O"; }
+}
+const app=document.getElementById("app"),inp=document.getElementById("inp");
+for(const k in DATA){const o=document.createElement("option");o.value=k;o.textContent=LABELS[k];app.appendChild(o)}
+function run(){
+ const m=DATA[app.value], s=[...inp.value]; let q=m.start; const rows=[];
+ s.forEach((ch,i)=>{const sym=cls(m.classifier,ch);const nx=(m.delta[q]||{})[sym]||m.trap;rows.push([i+1,q,ch,sym,nx]);q=nx});
+ const acc=m.accepts.includes(q);
+ const r=document.getElementById("res");
+ r.className="res "+(acc?"ok":"bad"); r.textContent=(acc?"ACCEPTED":"REJECTED")+" - final state "+q;
+ document.getElementById("tr").innerHTML="<tr><th>#</th><th>state</th><th>char</th><th>class</th><th>next</th></tr>"+
+  rows.map(x=>"<tr>"+x.map(c=>"<td>"+String(c).replace(/&/g,"&amp;").replace(/</g,"&lt;")+"</td>").join("")+"</tr>").join("");
+}
+function chips(){const c=document.getElementById("chips");c.innerHTML="";
+ SAMPLES[app.value].forEach(t=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>{inp.value=t;run()};c.appendChild(b)})}
+app.onchange=()=>{inp.value="";chips();run()};inp.oninput=run;chips();run();
+</script></body></html>
